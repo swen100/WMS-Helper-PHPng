@@ -133,6 +133,8 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "WMSHelperPHPng support", "enabled");
+        php_info_print_table_row(2, "WMS-Helper-PHPng version", "1.0 alpha");
+        php_info_print_table_row(2, "Author", "Swen Zanon");
 	php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini
@@ -146,8 +148,11 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
  * Every user visible function must have an entry in WMSHelperPHPng_functions[].
  */
 const zend_function_entry WMSHelperPHPng_functions[] = {
-	PHP_FE(confirm_WMSHelperPHPng_compiled,	NULL)		/* For testing, remove later. */
-	PHP_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
+	ZEND_FE(confirm_WMSHelperPHPng_compiled,	NULL)		/* For testing, remove later. */
+        ZEND_FE(coord2pix, NULL)
+        //ZEND_FE(coords2pix, NULL)
+        //ZEND_FE(points2pix, NULL)
+	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
 };
 /* }}} */
 
@@ -157,11 +162,11 @@ zend_module_entry WMSHelperPHPng_module_entry = {
 	STANDARD_MODULE_HEADER,
 	"WMSHelperPHPng",
 	WMSHelperPHPng_functions,
-	PHP_MINIT(WMSHelperPHPng),
-	PHP_MSHUTDOWN(WMSHelperPHPng),
-	PHP_RINIT(WMSHelperPHPng),		/* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(WMSHelperPHPng),	/* Replace with NULL if there's nothing to do at request end */
-	PHP_MINFO(WMSHelperPHPng),
+	ZEND_MODULE_STARTUP_N(WMSHelperPHPng),
+	ZEND_MODULE_SHUTDOWN_N(WMSHelperPHPng),
+	ZEND_MODULE_ACTIVATE_N(WMSHelperPHPng),		/* Replace with NULL if there's nothing to do at request start */
+	ZEND_MODULE_DEACTIVATE_N(WMSHelperPHPng),	/* Replace with NULL if there's nothing to do at request end */
+	ZEND_MODULE_INFO_N(WMSHelperPHPng),
 	PHP_WMSHELPERPHPNG_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
@@ -182,3 +187,38 @@ ZEND_GET_MODULE(WMSHelperPHPng)
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
+
+        /**
+ * 
+ * @param ht
+ * @param return_value
+ * @param return_value_ptr
+ * @param this_ptr
+ * @param return_value_used
+ */
+ZEND_FUNCTION(coord2pix) {
+    
+    zval xy_str_p, delimiter, xy_arr_p, return_value;
+    double minX, minY, resX, resY;
+    
+    //MAKE_STD_ZVAL(xy_str_p);
+    
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    //ALLOC_INIT_ZVAL(delimiter);
+    ZVAL_STRING(&delimiter, " ");
+    array_init(return_value);
+    
+    //ALLOC_INIT_ZVAL(xy_arr_p);
+    array_init(xy_arr_p);
+
+    php_explode(delimiter, xy_str_p, xy_arr_p, 1);
+    
+    //if (Z_TYPE_P(xy_arr_p) == IS_ARRAY) {
+    //    add_next_index_zval(return_value, coord2pix_static(xy_arr_p, minX, minY, resX, resY) );
+    //}
+    
+    RETURN_ARR(xy_arr_p);
+}

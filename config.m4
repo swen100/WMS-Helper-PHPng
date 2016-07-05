@@ -13,9 +13,9 @@ dnl [  --with-WMSHelperPHPng             Include WMSHelperPHPng support])
 
 dnl Otherwise use enable:
 
-dnl PHP_ARG_ENABLE(WMSHelperPHPng, whether to enable WMSHelperPHPng support,
+PHP_ARG_ENABLE(WMSHelperPHPng, whether to enable WMSHelperPHPng support,
 dnl Make sure that the comment is aligned:
-dnl [  --enable-WMSHelperPHPng           Enable WMSHelperPHPng support])
+[  --enable-WMSHelperPHPng           Enable WMSHelperPHPng support])
 
 if test "$PHP_WMSHELPERPHPNG" != "no"; then
   dnl Write more examples of tests here...
@@ -59,5 +59,5 @@ if test "$PHP_WMSHELPERPHPNG" != "no"; then
   dnl
   dnl PHP_SUBST(WMSHELPERPHPNG_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(WMSHelperPHPng, WMSHelperPHPng.c, $ext_shared,, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
+  PHP_NEW_EXTENSION(WMSHelperPHPng, WMSHelperPHPng.c, $ext_shared)
 fi
