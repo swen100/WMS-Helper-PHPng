@@ -49,43 +49,28 @@ PHP_INI_END()
    purposes. */
 
 /* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_WMSHelperPHPng_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_WMSHelperPHPng_compiled)
-{
-	char *arg = NULL;
-	size_t arg_len;//, len;
-	zend_string *strg;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	strg = strpprintf(0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "WMSHelperPHPng", arg);
-
-	RETURN_STR(strg);
-}
-
-static void tellMeWhatYouAre(zval *x)
+/* {{{ proto string tellMeWhatYouAre(zval *arg)
+   Returns nothing */
+static void tellMeWhatYouAre(zval *arg)
 {
     php_printf("\nThe Element is of type: ");
-    switch (Z_TYPE_P(x)) {
+    switch (Z_TYPE_P(arg)) {
     case IS_NULL:
         php_printf("NULL");
         break;
     case IS_TRUE:
     case IS_FALSE:
-        php_printf("Boolean: %s", Z_LVAL_P(x) ? "TRUE" : "FALSE");
+        php_printf("Boolean: %s", Z_LVAL_P(arg) ? "TRUE" : "FALSE");
         break;
     case IS_LONG:
-        php_printf("Long: %ld", Z_LVAL_P(x));
+        php_printf("Long: %ld", Z_LVAL_P(arg));
         break;
     case IS_DOUBLE:
-        php_printf("Double: %f", Z_DVAL_P(x));
+        php_printf("Double: %f", Z_DVAL_P(arg));
         break;
     case IS_STRING:
         php_printf("String: ");
-        PHPWRITE(Z_STRVAL_P(x), Z_STRLEN_P(x));
+        PHPWRITE(Z_STRVAL_P(arg), Z_STRLEN_P(arg));
         php_printf("");
         break;
     case IS_ARRAY:
@@ -101,26 +86,80 @@ static zval coord2pix_static(zval *xy_arr_p, double minX, double minY, double re
 {
     zval coord;
     zval *x, *y;
+//    zval *x2, *y2;
+//    int array_count;
     
-    // xy_arr_p is of type zval
     HashTable *xy_hash = Z_ARR_P(xy_arr_p);
+    array_init(&coord);
     
-    x = zend_hash_index_find(xy_hash, 0);
-    y = zend_hash_index_find(xy_hash, 1);
-    
-    if (x != NULL && y == NULL) {
+    if (NULL != (x = zend_hash_index_find(xy_hash, 0)) && 
+        NULL != (y = zend_hash_index_find(xy_hash, 1))) {
         
         convert_to_double_ex(x);
         convert_to_double_ex(y);
         
-        array_init(&coord);
         add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
         add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
+        
+//        HashTable *xy_hash2 = Z_ARR(coord);
+//        
+//        array_count = zend_hash_num_elements(xy_hash2);
+//        php_printf("The coord-array contains %d elements", array_count);
+//
+//        x2 = zend_hash_index_find(xy_hash2, 0);
+//        y2 = zend_hash_index_find(xy_hash2, 1);
+//        
+//        tellMeWhatYouAre(x2);
+//        tellMeWhatYouAre(y2);
+//        php_printf("The elements are %f and %f.", Z_DVAL_P(x2), Z_DVAL_P(y2) );
     }
     
     return coord;
 }
 
+static zval coord2pix_static2(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
+{
+    zval xy_arr_p, coord;
+    zval *x, *y;
+    zend_string *delimiter;
+    
+    delimiter = zend_string_init(" ", 1, 0);
+    array_init(&coord);
+    array_init(&xy_arr_p);
+    php_explode(delimiter, xy_str_p, &xy_arr_p, 1);
+    zend_string_release(delimiter);
+    
+    if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
+        HashTable *xy_hash = Z_ARR_P(&xy_arr_p);
+
+        if (NULL != (x = zend_hash_index_find(xy_hash, 0)) && 
+            NULL != (y = zend_hash_index_find(xy_hash, 1))) {
+
+            convert_to_double_ex(x);
+            convert_to_double_ex(y);
+
+            add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
+            add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
+        }
+    }
+    zval_ptr_dtor(&xy_arr_p);
+    return coord;
+}
+
+PHP_FUNCTION(coord2pix2) {
+    
+    zval coord;
+    zend_string *xy_str_p;
+    double minX, minY, resX, resY;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    array_init(return_value);
+    coord = coord2pix_static2(xy_str_p, minX, minY, resX, resY);
+    add_index_zval(return_value, 0, &coord);
+}
 
 /**
  * 
@@ -132,18 +171,15 @@ static zval coord2pix_static(zval *xy_arr_p, double minX, double minY, double re
  */
 PHP_FUNCTION(coord2pix) {
     
-    zval xy_arr_p;
+    zval xy_arr_p, coord;
     zend_string *delimiter, *xy_str_p;
     double minX, minY, resX, resY;
-    zval *x, *y, coord;
-    int array_count;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
     delimiter = zend_string_init(" ", 1, 0);
-    //ZVAL_STRING(delimiter, " ");
     
     array_init(&xy_arr_p);
     array_init(return_value);
@@ -152,39 +188,48 @@ PHP_FUNCTION(coord2pix) {
     zend_string_release(delimiter);
 
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
-        //coord2pix_static(&xy_arr_p, minX, minY, resX, resY);
-        //add_next_index_zval(return_value, coord2pix_static(&xy_arr_p, minX, minY, resX, resY) );
-        HashTable *xy_hash = Z_ARR(xy_arr_p);
-    
-        array_count = zend_hash_num_elements(xy_hash);
-//        php_printf("The array passed contains %d elements", array_count);
-
-        x = zend_hash_index_find(xy_hash, 0);
-        y = zend_hash_index_find(xy_hash, 1);
-        
-        if (x != NULL && y != NULL) {
-            
-            convert_to_double_ex(x);
-            convert_to_double_ex(y);
-
-            //tellMeWhatYouAre(x);
-//            php_printf("The elements are %f and %f.", Z_DVAL_P(x), Z_DVAL_P(y) );
-            
-            array_init(&coord);
-            add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
-            add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
-            
-            //add_next_index_zval(return_value, &coord );
-            add_index_zval(return_value, 0, &coord);
-            
-            //add_index_long(return_value, 42, 123);
-            //add_next_index_string(return_value, "I should now be found at index 43");
-            //add_next_index_stringl(return_value, "I'm at 44!", 10);
-            //add_assoc_double(return_value, "pi", 3.1415926535);
-            //add_assoc_zval(return_value, "subarray", &coord);
-        }
+        coord = coord2pix_static(&xy_arr_p, minX, minY, resX, resY);
+        add_index_zval(return_value, 0, &coord);
+//        zend_symtable_update(Z_ARRVAL_P(return_value), 0, &coord);
     }
+    zval_ptr_dtor(&xy_arr_p);
 }
+
+/**
+ * 
+ * @param string srcDefn
+ * @param string tgtDefn
+ * @param array points
+ */
+ZEND_FUNCTION(coords2pix) {
+    
+    zval pts_arr, *str;
+    zend_string *delimiter;
+    double minX, minY, resX, resY;
+    HashTable *pts_hash;
+    zval coord;
+    zval *zv;
+    
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zdddd", &str, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    delimiter = zend_string_init(",", 1, 0);
+    array_init(return_value);
+    array_init(&pts_arr);
+    php_explode(delimiter, Z_STR_P(str), &pts_arr, LONG_MAX);
+    zend_string_release(delimiter);
+    
+    if (Z_TYPE(pts_arr) == IS_ARRAY) {
+        pts_hash = Z_ARR_P(&pts_arr);
+        ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
+            coord = coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY);
+            add_next_index_zval(return_value, &coord );
+        } ZEND_HASH_FOREACH_END();
+    }
+    zval_ptr_dtor(&pts_arr);
+}
+
 
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
@@ -269,9 +314,9 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
  * Every user visible function must have an entry in WMSHelperPHPng_functions[].
  */
 const zend_function_entry WMSHelperPHPng_functions[] = {
-	ZEND_FE(confirm_WMSHelperPHPng_compiled,	NULL)		/* For testing, remove later. */
         ZEND_FE(coord2pix, NULL)
-        //ZEND_FE(coords2pix, NULL)
+        ZEND_FE(coord2pix2, NULL)
+        ZEND_FE(coords2pix, NULL)
         //ZEND_FE(points2pix, NULL)
 	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
 };
