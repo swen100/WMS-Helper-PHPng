@@ -54,7 +54,7 @@ PHP_INI_END()
 PHP_FUNCTION(confirm_WMSHelperPHPng_compiled)
 {
 	char *arg = NULL;
-	size_t arg_len, len;
+	size_t arg_len;//, len;
 	zend_string *strg;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
@@ -65,6 +65,127 @@ PHP_FUNCTION(confirm_WMSHelperPHPng_compiled)
 
 	RETURN_STR(strg);
 }
+
+static void tellMeWhatYouAre(zval *x)
+{
+    php_printf("\nThe Element is of type: ");
+    switch (Z_TYPE_P(x)) {
+    case IS_NULL:
+        php_printf("NULL");
+        break;
+    case IS_TRUE:
+    case IS_FALSE:
+        php_printf("Boolean: %s", Z_LVAL_P(x) ? "TRUE" : "FALSE");
+        break;
+    case IS_LONG:
+        php_printf("Long: %ld", Z_LVAL_P(x));
+        break;
+    case IS_DOUBLE:
+        php_printf("Double: %f", Z_DVAL_P(x));
+        break;
+    case IS_STRING:
+        php_printf("String: ");
+        PHPWRITE(Z_STRVAL_P(x), Z_STRLEN_P(x));
+        php_printf("");
+        break;
+    case IS_ARRAY:
+        php_printf("Array");
+        break;
+    default:
+        php_printf("Unknown");
+    }
+    php_printf("\n");
+}
+
+static zval coord2pix_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
+{
+    zval coord;
+    zval *x, *y;
+    
+    // xy_arr_p is of type zval
+    HashTable *xy_hash = Z_ARR_P(xy_arr_p);
+    
+    x = zend_hash_index_find(xy_hash, 0);
+    y = zend_hash_index_find(xy_hash, 1);
+    
+    if (x != NULL && y == NULL) {
+        
+        convert_to_double_ex(x);
+        convert_to_double_ex(y);
+        
+        array_init(&coord);
+        add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
+        add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
+    }
+    
+    return coord;
+}
+
+
+/**
+ * 
+ * @param ht
+ * @param return_value
+ * @param return_value_ptr
+ * @param this_ptr
+ * @param return_value_used
+ */
+PHP_FUNCTION(coord2pix) {
+    
+    zval xy_arr_p;
+    zend_string *delimiter, *xy_str_p;
+    double minX, minY, resX, resY;
+    zval *x, *y, coord;
+    int array_count;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    delimiter = zend_string_init(" ", 1, 0);
+    //ZVAL_STRING(delimiter, " ");
+    
+    array_init(&xy_arr_p);
+    array_init(return_value);
+  
+    php_explode(delimiter, xy_str_p, &xy_arr_p, 1);
+    zend_string_release(delimiter);
+
+    if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
+        //coord2pix_static(&xy_arr_p, minX, minY, resX, resY);
+        //add_next_index_zval(return_value, coord2pix_static(&xy_arr_p, minX, minY, resX, resY) );
+        HashTable *xy_hash = Z_ARR(xy_arr_p);
+    
+        array_count = zend_hash_num_elements(xy_hash);
+//        php_printf("The array passed contains %d elements", array_count);
+
+        x = zend_hash_index_find(xy_hash, 0);
+        y = zend_hash_index_find(xy_hash, 1);
+        
+        if (x != NULL && y != NULL) {
+            
+            convert_to_double_ex(x);
+            convert_to_double_ex(y);
+
+            //tellMeWhatYouAre(x);
+//            php_printf("The elements are %f and %f.", Z_DVAL_P(x), Z_DVAL_P(y) );
+            
+            array_init(&coord);
+            add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
+            add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
+            
+            //add_next_index_zval(return_value, &coord );
+            add_index_zval(return_value, 0, &coord);
+            
+            //add_index_long(return_value, 42, 123);
+            //add_next_index_string(return_value, "I should now be found at index 43");
+            //add_next_index_stringl(return_value, "I'm at 44!", 10);
+            //add_assoc_double(return_value, "pi", 3.1415926535);
+            //add_assoc_zval(return_value, "subarray", &coord);
+        }
+    }
+}
+
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
    unfold functions in source code. See the corresponding marks just before
@@ -187,38 +308,3 @@ ZEND_GET_MODULE(WMSHelperPHPng)
  * vim600: noet sw=4 ts=4 fdm=marker
  * vim<600: noet sw=4 ts=4
  */
-
-        /**
- * 
- * @param ht
- * @param return_value
- * @param return_value_ptr
- * @param this_ptr
- * @param return_value_used
- */
-ZEND_FUNCTION(coord2pix) {
-    
-    zval xy_str_p, delimiter, xy_arr_p, return_value;
-    double minX, minY, resX, resY;
-    
-    //MAKE_STD_ZVAL(xy_str_p);
-    
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
-        RETURN_NULL();
-    }
-    
-    //ALLOC_INIT_ZVAL(delimiter);
-    ZVAL_STRING(&delimiter, " ");
-    array_init(return_value);
-    
-    //ALLOC_INIT_ZVAL(xy_arr_p);
-    array_init(xy_arr_p);
-
-    php_explode(delimiter, xy_str_p, xy_arr_p, 1);
-    
-    //if (Z_TYPE_P(xy_arr_p) == IS_ARRAY) {
-    //    add_next_index_zval(return_value, coord2pix_static(xy_arr_p, minX, minY, resX, resY) );
-    //}
-    
-    RETURN_ARR(xy_arr_p);
-}
