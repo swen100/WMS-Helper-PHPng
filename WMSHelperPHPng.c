@@ -83,7 +83,17 @@ static void tellMeWhatYouAre(zval *arg)
     php_printf("\n");
 }
 
-static zval coord2pix_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
+/**
+ * Function to calculate for an array with [0] (x) and [1] [y) the pixel-value
+ * 
+ * @param array point as array with [0] as x and [1] as y
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ * @return array coord (zval)
+ */
+static zval coord2pixArray_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
 {
     zval coord;
     zval *x, *y;
@@ -118,7 +128,17 @@ static zval coord2pix_static(zval *xy_arr_p, double minX, double minY, double re
     return coord;
 }
 
-static zval coord2pix_static2(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
+/**
+ * Function to calculate the pixel-value for a 
+ * string containing value for x and y separated by space
+ * 
+ * @param string pointstring 
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ */
+static zval coord2pixString_static(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
 {
     zval xy_arr_p, coord;
     zval *x, *y;
@@ -153,6 +173,14 @@ static zval coord2pix_static2(zend_string *xy_str_p, double minX, double minY, d
     return coord;
 }
 
+/**
+ * 
+ * @param string pointstring
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ */
 PHP_FUNCTION(coord2pix2) {
     
     zval coord;
@@ -164,22 +192,22 @@ PHP_FUNCTION(coord2pix2) {
     }
     
     array_init(return_value);
-    coord = coord2pix_static2(xy_str_p, minX, minY, resX, resY);
+    coord = coord2pixString_static(xy_str_p, minX, minY, resX, resY);
     add_index_zval(return_value, 0, &coord);
 }
 
 /**
  * 
- * @param ht
- * @param return_value
- * @param return_value_ptr
- * @param this_ptr
- * @param return_value_used
+ * @param string pointstring
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
  */
 PHP_FUNCTION(coord2pix) {
     
     zval xy_arr_p, coord;
-    zend_string *delimiter, *xy_str_p;
+    zend_string *xy_str_p, *delimiter;
     double minX, minY, resX, resY;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
@@ -194,7 +222,7 @@ PHP_FUNCTION(coord2pix) {
     php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
 
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
-        coord = coord2pix_static(&xy_arr_p, minX, minY, resX, resY);
+        coord = coord2pixArray_static(&xy_arr_p, minX, minY, resX, resY);
         add_index_zval(return_value, 0, &coord);
 //        zend_symtable_update(Z_ARRVAL_P(return_value), 0, &coord);
     }
@@ -205,10 +233,15 @@ PHP_FUNCTION(coord2pix) {
 }
 
 /**
+ * Function to walk through an array of points and 
+ * calculate for every entry the pixel-value
  * 
- * @param string srcDefn
- * @param string tgtDefn
- * @param array points
+ * @param linestring with points containing values for x and y separated by space
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ * @return array coords with array containing [0] for x and [1] for y
  */
 ZEND_FUNCTION(coords2pix) {
     
@@ -223,17 +256,16 @@ ZEND_FUNCTION(coords2pix) {
         RETURN_NULL();
     }
     
-    // retrieve zend_string from zval by Z_STR*() macro    
-    
     delimiter = zend_string_init(",", 1, 0);
     array_init(return_value);
     array_init(&pts_arr);
     php_explode(delimiter, str, &pts_arr, LONG_MAX);
+    //php_explode(delimiter, Z_STR_P(str), &pts_arr, LONG_MAX);
     
     if (Z_TYPE(pts_arr) == IS_ARRAY) {
         pts_hash = Z_ARR_P(&pts_arr);
         ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
-            coord = coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY);
+            coord = coord2pixString_static(Z_STR_P(zv), minX, minY, resX, resY);
             add_next_index_zval(return_value, &coord );
             //add_next_index_zval(return_value, (struct zval *)coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY) );
         } ZEND_HASH_FOREACH_END();
@@ -244,6 +276,39 @@ ZEND_FUNCTION(coords2pix) {
     zval_ptr_dtor(&pts_arr);
 }
 
+/**
+ * Function to walk through an array of points and 
+ * calculate for every entry the pixel-value
+ * 
+ * @param array of points with x and y separated with space
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ * @return array coords with array containing [0] for x and [1] for y
+ */
+ZEND_FUNCTION(points2pix) {
+    
+    zval *pts_arr;
+    double minX, minY, resX, resY;
+    HashTable *pts_hash;
+    zval coord;
+    zval *zv;
+    
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "adddd", &pts_arr, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    array_init(return_value);
+    
+    if (Z_TYPE_P(pts_arr) == IS_ARRAY) {
+        pts_hash = Z_ARR_P(pts_arr);
+        ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
+            coord = coord2pixString_static(Z_STR_P(zv), minX, minY, resX, resY);
+            add_next_index_zval(return_value, &coord );
+        } ZEND_HASH_FOREACH_END();
+    }
+}
 
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
@@ -331,7 +396,7 @@ const zend_function_entry WMSHelperPHPng_functions[] = {
         ZEND_FE(coord2pix, NULL)
         ZEND_FE(coord2pix2, NULL)
         ZEND_FE(coords2pix, NULL)
-        //ZEND_FE(points2pix, NULL)
+        ZEND_FE(points2pix, NULL)
 	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
 };
 /* }}} */
