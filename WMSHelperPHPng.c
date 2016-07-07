@@ -93,7 +93,7 @@ static void tellMeWhatYouAre(zval *arg)
  * @param double resY
  * @return array coord (zval)
  */
-static zval coord2pixArray_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
+static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
 {
     zval coord;
     zval *x, *y;
@@ -139,7 +139,7 @@ static zval coord2pixArray_static(zval *xy_arr_p, double minX, double minY, doub
  * @param double resY
  * @return array coord (zval)
  */
-static zval coord2pixString_static(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
+static zval coordString2pix_static(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
 {
     zval xy_arr_p, coord;
     zval *x, *y;
@@ -203,7 +203,7 @@ PHP_FUNCTION(coord2pix2) {
     php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
 
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
-        coord = coord2pixArray_static(&xy_arr_p, minX, minY, resX, resY);
+        coord = coordArray2pix_static(&xy_arr_p, minX, minY, resX, resY);
         add_index_zval(return_value, 0, &coord);
 //        zend_symtable_update(Z_ARRVAL_P(return_value), 0, &coord);
     }
@@ -236,7 +236,7 @@ PHP_FUNCTION(coord2pix) {
     }
     
     array_init(return_value);
-    coord = coord2pixString_static(xy_str_p, minX, minY, resX, resY);
+    coord = coordString2pix_static(xy_str_p, minX, minY, resX, resY);
     add_index_zval(return_value, 0, &coord);
 }
 
@@ -273,7 +273,7 @@ ZEND_FUNCTION(coords2pix) {
     if (Z_TYPE(pts_arr) == IS_ARRAY) {
         pts_hash = Z_ARR_P(&pts_arr);
         ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
-            coord = coord2pixString_static(Z_STR_P(zv), minX, minY, resX, resY);
+            coord = coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY);
             add_next_index_zval(return_value, &coord );
             //add_next_index_zval(return_value, (struct zval *)coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY) );
         } ZEND_HASH_FOREACH_END();
@@ -312,7 +312,7 @@ ZEND_FUNCTION(points2pix) {
     if (Z_TYPE_P(pts_arr) == IS_ARRAY) {
         pts_hash = Z_ARR_P(pts_arr);
         ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
-            coord = coord2pixString_static(Z_STR_P(zv), minX, minY, resX, resY);
+            coord = coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY);
             add_next_index_zval(return_value, &coord );
         } ZEND_HASH_FOREACH_END();
     }
