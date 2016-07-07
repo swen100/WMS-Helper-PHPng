@@ -181,29 +181,6 @@ static zval coord2pixString_static(zend_string *xy_str_p, double minX, double mi
  * @param double resX
  * @param double resY
  */
-PHP_FUNCTION(coord2pix2) {
-    
-    zval coord;
-    zend_string *xy_str_p;
-    double minX, minY, resX, resY;
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
-        RETURN_NULL();
-    }
-    
-    array_init(return_value);
-    coord = coord2pixString_static(xy_str_p, minX, minY, resX, resY);
-    add_index_zval(return_value, 0, &coord);
-}
-
-/**
- * 
- * @param string pointstring
- * @param double minX
- * @param double minY
- * @param double resX
- * @param double resY
- */
 PHP_FUNCTION(coord2pix) {
     
     zval xy_arr_p, coord;
@@ -230,6 +207,29 @@ PHP_FUNCTION(coord2pix) {
     // cleanup
     zend_string_release(delimiter);
     zval_ptr_dtor(&xy_arr_p);
+}
+
+/**
+ * 
+ * @param string pointstring
+ * @param double minX
+ * @param double minY
+ * @param double resX
+ * @param double resY
+ */
+PHP_FUNCTION(coord2pix2) {
+    
+    zval coord;
+    zend_string *xy_str_p;
+    double minX, minY, resX, resY;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+        RETURN_NULL();
+    }
+    
+    array_init(return_value);
+    coord = coord2pixString_static(xy_str_p, minX, minY, resX, resY);
+    add_index_zval(return_value, 0, &coord);
 }
 
 /**
