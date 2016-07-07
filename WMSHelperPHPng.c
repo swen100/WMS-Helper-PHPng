@@ -137,6 +137,7 @@ static zval coord2pixArray_static(zval *xy_arr_p, double minX, double minY, doub
  * @param double minY
  * @param double resX
  * @param double resY
+ * @return array coord (zval)
  */
 static zval coord2pixString_static(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
 {
@@ -174,14 +175,17 @@ static zval coord2pixString_static(zend_string *xy_str_p, double minX, double mi
 }
 
 /**
+ * Function to calculate the pixel-value for a 
+ * string, containing value for x and y separated by space
  * 
- * @param string pointstring
+ * @param string pointstring 
  * @param double minX
  * @param double minY
  * @param double resX
  * @param double resY
+ * @return array point as array with [0] as x and [1] as y
  */
-PHP_FUNCTION(coord2pix) {
+PHP_FUNCTION(coord2pix2) {
     
     zval xy_arr_p, coord;
     zend_string *xy_str_p, *delimiter;
@@ -210,14 +214,18 @@ PHP_FUNCTION(coord2pix) {
 }
 
 /**
+ * Function to calculate the pixel-value for a 
+ * string, containing value for x and y separated by space.
+ * This functions is slightly faster.
  * 
- * @param string pointstring
+ * @param string pointstring 
  * @param double minX
  * @param double minY
  * @param double resX
  * @param double resY
+ * @return array point as array with [0] as x and [1] as y
  */
-PHP_FUNCTION(coord2pix2) {
+PHP_FUNCTION(coord2pix) {
     
     zval coord;
     zend_string *xy_str_p;
