@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_WMSHelperPHPng.h"
+//#include "ext/standard/php_string.h"
 
 /* If you declare any globals in php_WMSHelperPHPng.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(WMSHelperPHPng)
@@ -126,8 +127,7 @@ static zval coord2pix_static2(zend_string *xy_str_p, double minX, double minY, d
     delimiter = zend_string_init(" ", 1, 0);
     array_init(&coord);
     array_init(&xy_arr_p);
-    php_explode(delimiter, xy_str_p, &xy_arr_p, 1);
-    zend_string_release(delimiter);
+    php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
     
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
         HashTable *xy_hash = Z_ARR_P(&xy_arr_p);
@@ -142,7 +142,14 @@ static zval coord2pix_static2(zend_string *xy_str_p, double minX, double minY, d
             add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
         }
     }
+    
+    // cleanup// cleanup
+    zend_string_release(delimiter);
     zval_ptr_dtor(&xy_arr_p);
+    
+    // how to return struct zval * instead of zval?
+    //zval_copy_ctor(coord);
+    //SEPARATE_ZVAL(coord);
     return coord;
 }
 
@@ -184,14 +191,16 @@ PHP_FUNCTION(coord2pix) {
     array_init(&xy_arr_p);
     array_init(return_value);
   
-    php_explode(delimiter, xy_str_p, &xy_arr_p, 1);
-    zend_string_release(delimiter);
+    php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
 
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
         coord = coord2pix_static(&xy_arr_p, minX, minY, resX, resY);
         add_index_zval(return_value, 0, &coord);
 //        zend_symtable_update(Z_ARRVAL_P(return_value), 0, &coord);
     }
+    
+    // cleanup
+    zend_string_release(delimiter);
     zval_ptr_dtor(&xy_arr_p);
 }
 
@@ -203,30 +212,35 @@ PHP_FUNCTION(coord2pix) {
  */
 ZEND_FUNCTION(coords2pix) {
     
-    zval pts_arr, *str;
-    zend_string *delimiter;
+    zval pts_arr;
+    zend_string *delimiter, *str;
     double minX, minY, resX, resY;
     HashTable *pts_hash;
     zval coord;
     zval *zv;
     
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zdddd", &str, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
+    
+    // retrieve zend_string from zval by Z_STR*() macro    
     
     delimiter = zend_string_init(",", 1, 0);
     array_init(return_value);
     array_init(&pts_arr);
-    php_explode(delimiter, Z_STR_P(str), &pts_arr, LONG_MAX);
-    zend_string_release(delimiter);
+    php_explode(delimiter, str, &pts_arr, LONG_MAX);
     
     if (Z_TYPE(pts_arr) == IS_ARRAY) {
         pts_hash = Z_ARR_P(&pts_arr);
         ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
             coord = coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY);
             add_next_index_zval(return_value, &coord );
+            //add_next_index_zval(return_value, (struct zval *)coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY) );
         } ZEND_HASH_FOREACH_END();
     }
+    
+    // cleanup
+    zend_string_release(delimiter);
     zval_ptr_dtor(&pts_arr);
 }
 
