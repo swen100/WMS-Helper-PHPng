@@ -1,5 +1,3 @@
-dnl $Id$
-
 PHP_ARG_ENABLE(WMSHelperPHPng, whether to enable WMSHelperPHPng support,
 [  --enable-WMSHelperPHPng           Enable WMSHelperPHPng support])
 
