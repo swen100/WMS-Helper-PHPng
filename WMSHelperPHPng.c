@@ -97,8 +97,6 @@ static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, doub
 {
     zval coord;
     zval *x, *y;
-//    zval *x2, *y2;
-//    int array_count;
     
     HashTable *xy_hash = Z_ARR_P(xy_arr_p);
     array_init(&coord);
@@ -111,18 +109,6 @@ static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, doub
         
         add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
         add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
-        
-//        HashTable *xy_hash2 = Z_ARR(coord);
-//        
-//        array_count = zend_hash_num_elements(xy_hash2);
-//        php_printf("The coord-array contains %d elements", array_count);
-//
-//        x2 = zend_hash_index_find(xy_hash2, 0);
-//        y2 = zend_hash_index_find(xy_hash2, 1);
-//        
-//        tellMeWhatYouAre(x2);
-//        tellMeWhatYouAre(y2);
-//        php_printf("The elements are %f and %f.", Z_DVAL_P(x2), Z_DVAL_P(y2) );
     }
     
     return coord;
@@ -142,32 +128,20 @@ static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, doub
 static zval coordString2pix_static(zend_string *xy_str_p, double minX, double minY, double resX, double resY )
 {
     zval xy_arr_p, coord;
-    zval *x, *y;
     zend_string *delimiter;
     
     delimiter = zend_string_init(" ", 1, 0);
-    array_init(&coord);
     array_init(&xy_arr_p);
     php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
     
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
-        HashTable *xy_hash = Z_ARR_P(&xy_arr_p);
-
-        if (NULL != (x = zend_hash_index_find(xy_hash, 0)) && 
-            NULL != (y = zend_hash_index_find(xy_hash, 1))) {
-
-            convert_to_double_ex(x);
-            convert_to_double_ex(y);
-
-            add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
-            add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
-        }
+        coord = coordArray2pix_static(&xy_arr_p, minX, minY, resX, resY);
     }
     
     // cleanup// cleanup
     zend_string_release(delimiter);
     zval_ptr_dtor(&xy_arr_p);
-    
+    //RETVAL_ZVAL(coord, 1, 0);
     // how to return struct zval * instead of zval?
     //zval_copy_ctor(coord);
     //SEPARATE_ZVAL(coord);
@@ -275,6 +249,7 @@ ZEND_FUNCTION(coords2pix) {
         ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
             coord = coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY);
             add_next_index_zval(return_value, &coord );
+//            add_next_index_zval(return_value, (void *)coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY) );
             //add_next_index_zval(return_value, (struct zval *)coord2pix_static2(Z_STR_P(zv), minX, minY, resX, resY) );
         } ZEND_HASH_FOREACH_END();
     }
@@ -317,6 +292,24 @@ ZEND_FUNCTION(points2pix) {
         } ZEND_HASH_FOREACH_END();
     }
 }
+
+/* Every user-visible function in PHP should document itself in the source */
+/* {{{ proto string confirm_WMSHelperPHPng_compiled(string arg)
+   Return a string to confirm that the module is compiled in */
+PHP_FUNCTION(confirmWMSHelperCompiled)
+{
+    ZVAL_STRING(return_value, "Module WMSHelperPHPng is compiled into PHP.");
+}
+
+/**
+ * string WMSHelperPHPngVersion()
+ */
+PHP_FUNCTION(getWMSHelperVersion)
+{
+    
+    ZVAL_STRING(return_value, PHP_WMSHELPERPHPNG_VERSION );
+}
+
 
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
@@ -405,6 +398,8 @@ const zend_function_entry WMSHelperPHPng_functions[] = {
         ZEND_FE(coord2pix2, NULL)
         ZEND_FE(coords2pix, NULL)
         ZEND_FE(points2pix, NULL)
+        ZEND_FE(confirmWMSHelperCompiled, NULL)
+        ZEND_FE(getWMSHelperVersion, NULL)
 	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
 };
 /* }}} */
