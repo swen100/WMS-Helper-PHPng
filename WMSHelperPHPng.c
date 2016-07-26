@@ -93,9 +93,9 @@ static void tellMeWhatYouAre(zval *arg)
  * @param double resY
  * @return array coord (zval)
  */
-static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
+static zval /* * */coordArray2pix_static(zval *xy_arr_p, double minX, double minY, double resX, double resY )
 {
-    zval coord;
+    zval coord /*, *return_value*/;
     zval *x, *y;
     
     HashTable *xy_hash = Z_ARR_P(xy_arr_p);
@@ -110,6 +110,11 @@ static zval coordArray2pix_static(zval *xy_arr_p, double minX, double minY, doub
         add_index_double(&coord, 0, (Z_DVAL_P(x) - minX) * resX);
         add_index_double(&coord, 1, (Z_DVAL_P(y) - minY) * resY);
     }
+    
+    // how to return struct zval * instead of zval?
+//    return_value = emalloc(sizeof(coord));
+//    ZVAL_ZVAL(return_value, &coord, 1, 1);
+//    return return_value;
     
     return coord;
 }
@@ -141,10 +146,7 @@ static zval coordString2pix_static(zend_string *xy_str_p, double minX, double mi
     // cleanup// cleanup
     zend_string_release(delimiter);
     zval_ptr_dtor(&xy_arr_p);
-    //RETVAL_ZVAL(coord, 1, 0);
-    // how to return struct zval * instead of zval?
-    //zval_copy_ctor(coord);
-    //SEPARATE_ZVAL(coord);
+    
     return coord;
 }
 
@@ -162,10 +164,10 @@ static zval coordString2pix_static(zend_string *xy_str_p, double minX, double mi
 PHP_FUNCTION(coord2pix2) {
     
     zval xy_arr_p, coord;
-    zend_string *xy_str_p, *delimiter;
+    zend_string *xy_str, *delimiter;
     double minX, minY, resX, resY;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
@@ -174,12 +176,11 @@ PHP_FUNCTION(coord2pix2) {
     array_init(&xy_arr_p);
     array_init(return_value);
   
-    php_explode(delimiter, xy_str_p, &xy_arr_p, 2);
+    php_explode(delimiter, xy_str, &xy_arr_p, 2);
 
     if (Z_TYPE(xy_arr_p) == IS_ARRAY) {
         coord = coordArray2pix_static(&xy_arr_p, minX, minY, resX, resY);
         add_index_zval(return_value, 0, &coord);
-//        zend_symtable_update(Z_ARRVAL_P(return_value), 0, &coord);
     }
     
     // cleanup
@@ -202,15 +203,15 @@ PHP_FUNCTION(coord2pix2) {
 PHP_FUNCTION(coord2pix) {
     
     zval coord;
-    zend_string *xy_str_p;
+    zend_string *xy_str;
     double minX, minY, resX, resY;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str_p, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
     array_init(return_value);
-    coord = coordString2pix_static(xy_str_p, minX, minY, resX, resY);
+    coord = coordString2pix_static(xy_str, minX, minY, resX, resY);
     add_index_zval(return_value, 0, &coord);
 }
 
