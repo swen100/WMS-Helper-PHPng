@@ -150,6 +150,14 @@ static zval coordString2pix_static(zend_string *xy_str_p, double minX, double mi
     return coord;
 }
 
+ZEND_BEGIN_ARG_INFO(coord2pix2_args, ZEND_SEND_BY_VAL)
+    ZEND_ARG_INFO(0, xy_str)
+    ZEND_ARG_INFO(0, minX)
+    ZEND_ARG_INFO(0, minY)
+    ZEND_ARG_INFO(0, resX)
+    ZEND_ARG_INFO(0, resY)
+ZEND_END_ARG_INFO()
+
 /**
  * Function to calculate the pixel-value for a 
  * string, containing value for x and y separated by space
@@ -167,7 +175,7 @@ PHP_FUNCTION(coord2pix2) {
     zend_string *xy_str, *delimiter;
     double minX, minY, resX, resY;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
@@ -188,6 +196,14 @@ PHP_FUNCTION(coord2pix2) {
     zval_ptr_dtor(&xy_arr_p);
 }
 
+ZEND_BEGIN_ARG_INFO(coord2pix_args, ZEND_SEND_BY_VAL)
+    ZEND_ARG_INFO(0, xy_str)
+    ZEND_ARG_INFO(0, minX)
+    ZEND_ARG_INFO(0, minY)
+    ZEND_ARG_INFO(0, resX)
+    ZEND_ARG_INFO(0, resY)
+ZEND_END_ARG_INFO()
+
 /**
  * Function to calculate the pixel-value for a 
  * string, containing value for x and y separated by space.
@@ -206,7 +222,7 @@ PHP_FUNCTION(coord2pix) {
     zend_string *xy_str;
     double minX, minY, resX, resY;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sdddd", &xy_str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
@@ -214,6 +230,14 @@ PHP_FUNCTION(coord2pix) {
     coord = coordString2pix_static(xy_str, minX, minY, resX, resY);
     add_index_zval(return_value, 0, &coord);
 }
+
+ZEND_BEGIN_ARG_INFO(coords2pix_args, ZEND_SEND_BY_VAL)
+    ZEND_ARG_INFO(0, str)
+    ZEND_ARG_INFO(0, minX)
+    ZEND_ARG_INFO(0, minY)
+    ZEND_ARG_INFO(0, resX)
+    ZEND_ARG_INFO(0, resY)
+ZEND_END_ARG_INFO()
 
 /**
  * Function to walk through an array of points and 
@@ -235,7 +259,7 @@ ZEND_FUNCTION(coords2pix) {
     zval coord;
     zval *zv;
     
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sdddd", &str, &minX, &minY, &resX, &resY) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sdddd", &str, &minX, &minY, &resX, &resY) == FAILURE) {
         RETURN_NULL();
     }
     
@@ -260,6 +284,15 @@ ZEND_FUNCTION(coords2pix) {
     zval_ptr_dtor(&pts_arr);
 }
 
+
+ZEND_BEGIN_ARG_INFO(points2pix_args, ZEND_SEND_BY_VAL)
+    ZEND_ARG_INFO(0, pts_arr)
+    ZEND_ARG_INFO(0, minX)
+    ZEND_ARG_INFO(0, minY)
+    ZEND_ARG_INFO(0, resX)
+    ZEND_ARG_INFO(0, resY)
+ZEND_END_ARG_INFO()
+
 /**
  * Function to walk through an array of points and 
  * calculate for every entry the pixel-value
@@ -279,18 +312,18 @@ ZEND_FUNCTION(points2pix) {
     zval coord;
     zval *zv;
     
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "adddd", &pts_arr, &minX, &minY, &resX, &resY) == FAILURE) {
-        RETURN_NULL();
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "adddd", &pts_arr, &minX, &minY, &resX, &resY) == FAILURE) {
+            return;
     }
     
     array_init(return_value);
     
     if (Z_TYPE_P(pts_arr) == IS_ARRAY) {
-        pts_hash = Z_ARR_P(pts_arr);
-        ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
-            coord = coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY);
-            add_next_index_zval(return_value, &coord );
-        } ZEND_HASH_FOREACH_END();
+            pts_hash = Z_ARR_P(pts_arr);
+            ZEND_HASH_FOREACH_VAL(pts_hash, zv) {
+                coord = coordString2pix_static(Z_STR_P(zv), minX, minY, resX, resY);
+                add_next_index_zval(return_value, &coord );
+            } ZEND_HASH_FOREACH_END();
     }
 }
 
@@ -395,10 +428,10 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
  * Every user visible function must have an entry in WMSHelperPHPng_functions[].
  */
 const zend_function_entry WMSHelperPHPng_functions[] = {
-        ZEND_FE(coord2pix, NULL)
-        ZEND_FE(coord2pix2, NULL)
-        ZEND_FE(coords2pix, NULL)
-        ZEND_FE(points2pix, NULL)
+        ZEND_FE(coord2pix, coord2pix_args)
+        ZEND_FE(coord2pix2, coord2pix2_args)
+        ZEND_FE(coords2pix, coords2pix_args)
+        ZEND_FE(points2pix, points2pix_args)
         ZEND_FE(confirmWMSHelperCompiled, NULL)
         ZEND_FE(getWMSHelperVersion, NULL)
 	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
