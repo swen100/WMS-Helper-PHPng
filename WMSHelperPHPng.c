@@ -413,7 +413,7 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "WMSHelperPHPng support", "enabled");
-        php_info_print_table_row(2, "WMS-Helper-PHPng version", "1.0 alpha");
+        php_info_print_table_row(2, "WMS-Helper-PHPng version", "1.0.0");
         php_info_print_table_row(2, "Author", "Swen Zanon");
 	php_info_print_table_end();
 
