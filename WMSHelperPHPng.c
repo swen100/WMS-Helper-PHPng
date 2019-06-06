@@ -22,10 +22,12 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "php_WMSHelperPHPng.h"
+#include <php.h>
+#include <php_ini.h>
+#include <ext/standard/info.h>
+#include <zend_string.h>
+#include <ext/standard/php_string.h>
+#include <php_WMSHelperPHPng.h>
 //#include "ext/standard/php_string.h"
 
 /* If you declare any globals in php_WMSHelperPHPng.h uncomment this:
@@ -253,7 +255,7 @@ ZEND_END_ARG_INFO()
 ZEND_FUNCTION(coords2pix) {
     
     zval pts_arr;
-    zend_string *delimiter, *str;
+    zend_string *delimiter, *str, *trimmed_str;
     double minX, minY, resX, resY;
     HashTable *pts_hash;
     zval coord;
@@ -266,7 +268,9 @@ ZEND_FUNCTION(coords2pix) {
     delimiter = zend_string_init(",", 1, 0);
     array_init(return_value);
     array_init(&pts_arr);
-    php_explode(delimiter, str, &pts_arr, LONG_MAX);
+
+    trimmed_str = php_trim(str, NULL, 0, 3);
+    php_explode(delimiter, trimmed_str, &pts_arr, LONG_MAX);
     //php_explode(delimiter, Z_STR_P(str), &pts_arr, LONG_MAX);
     
     if (Z_TYPE(pts_arr) == IS_ARRAY) {
@@ -281,6 +285,7 @@ ZEND_FUNCTION(coords2pix) {
     
     // cleanup
     zend_string_release(delimiter);
+    zend_string_release(trimmed_str);
     zval_ptr_dtor(&pts_arr);
 }
 
