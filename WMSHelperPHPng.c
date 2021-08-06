@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
+  | PHP Version 8                                                        |
   +----------------------------------------------------------------------+
   | Copyright (c) 1997-2016 The PHP Group                                |
   +----------------------------------------------------------------------+
@@ -12,11 +12,9 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: Swen Zanon                                                   |
   +----------------------------------------------------------------------+
 */
-
-/* $Id$ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -51,7 +49,6 @@ PHP_INI_END()
    so that your module can be compiled into PHP, it exists only for testing
    purposes. */
 
-/* Every user-visible function in PHP should document itself in the source */
 /* {{{ proto string tellMeWhatYouAre(zval *arg)
    Returns nothing */
 static void tellMeWhatYouAre(zval *arg)
@@ -428,6 +425,9 @@ PHP_MINFO_FUNCTION(WMSHelperPHPng)
 }
 /* }}} */
 
+ZEND_BEGIN_ARG_INFO(WMSHelperPHPng_method_no_args, ZEND_SEND_BY_VAL)
+ZEND_END_ARG_INFO()
+
 /* {{{ WMSHelperPHPng_functions[]
  *
  * Every user visible function must have an entry in WMSHelperPHPng_functions[].
@@ -437,8 +437,8 @@ const zend_function_entry WMSHelperPHPng_functions[] = {
         ZEND_FE(coord2pix2, coord2pix2_args)
         ZEND_FE(coords2pix, coords2pix_args)
         ZEND_FE(points2pix, points2pix_args)
-        ZEND_FE(confirmWMSHelperCompiled, NULL)
-        ZEND_FE(getWMSHelperVersion, NULL)
+        ZEND_FE(confirmWMSHelperCompiled, WMSHelperPHPng_method_no_args)
+        ZEND_FE(getWMSHelperVersion, WMSHelperPHPng_method_no_args)
 	ZEND_FE_END	/* Must be the last line in WMSHelperPHPng_functions[] */
 };
 /* }}} */
